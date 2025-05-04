@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Home</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <nav>
+    <a class="logo" href="{{url_for('student_home')}}"></a>
+    <ul>
+      <li><a href="{{url_for('student_home')}}">Home</a></li>
+      <li><a href="{{url_for('student_register')}}" class="active">Course Register</a></li>
+      <li><a href="{{url_for('student_calendar')}}">Student Calendar</a></li>
+      <li><a href="{{url_for('home')}}">Sign out</a></li>
+    </ul>
+  </nav>
+  
+  <div class="container">
+    <form action="{{ url_for('search_course') }}" method="POST">
+      <h4>Course ID <input type="text" name="course_code" /></h4>
+      <button type = "submit"> Find</button>
+      <h3>{{ course_code if course_code else 'course_name' }}</h3>
+    </form>
+    {% if zipped_info %}
+      <table>
+        <thead>
+          <tr>
+            <th>Group ID</th>
+            <th>Student Count</th>
+            <th>Teacher</th>
+            <th>Date</th>
+            <th>Segment</th>
+            <th>Room</th>
+            <th>Register</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for class in zipped_info  %}
+            <tr>
+              <form action="{{ url_for('add_register') }}" method="POST">
+                <td>{{ class[0][0] }}</td>
+                <td>{{ class[0][5] }}/{{class[0][4]}}</td>
+                <td>{{ class[2][0] }}</td>
+                <td>{{ class[1][5] }}</td>
+                <td>{{ class[1][3]}}-{{class[1][4] }}</td>
+                <td>{{ class[1][6] }}</td>
+
+                <input type="hidden" name="student_id" value="{{ student_id }}">
+                <input type="hidden" name="class_id" value="{{ class[0][0] }}">
+                <input type="hidden" name="subject_id" value="{{ class[0][1] }}">
+                <input type="hidden" name="sem_id" value="{{ class[0][2] }}">
+                <td> <button type = "submit"> Add</button></td>
+              </form>
+            </tr> 
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>Unavailable "{{ course_code }}"</p>
+    {% endif %}
+  </div>
+
+  <div class="container">
+    <h3>Registered Course</h3>
+    <form action="{{ url_for('get_registered_course') }}" method="POST">
+      <input type="hidden" name="studentID" value="{{ student_id }}">
+      <button type="submit">Load My Registered Courses</button>
+    </form>
+    {% if registered_class %} 
+    <table>
+      <thead>
+        <tr>
+          <th>Group ID</th>
+          <th>Course ID</th>
+          <th>Teacher</th>
+          <th>Date</th>
+          <th>Segment</th>
+          <th>Room</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+          {% for class in registered_class  %}
+              <tr>
+                <td>{{ class[0] }}</td>
+                <td>{{ class[1] }}</td>
+                <td>{{ class[2] }}</td>
+                <td>{{ class[1][5] }}</td>
+                <td>{{ class[1][3]}}-{{class[1][4] }}</td>
+                <td>{{ class[1][6] }}</td>
+                <td> <button type = "submit"> Add</button></td>
+              </tr> 
+            {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+          <p>Unavailable "{{ course_code }}"</p>
+    {% endif %}
+  </div>
+    
+</body>
+</html>

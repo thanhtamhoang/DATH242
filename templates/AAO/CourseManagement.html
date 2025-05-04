@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AAO Home</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <nav>
+    <a class="logo" href = "{{url_for('aao_home')}}"></a>
+    <ul>
+      <li><a href="{{url_for('aao_home')}}" >Home</a></li>
+      <li><a href="{{url_for('course_list')}}">Course Management</a></li>
+      <li><a href="{{url_for('home')}}">Sign out</a></li>
+    </ul>
+  </nav>
+<a>{{courses[1]}}</a>
+</body>
+</html>

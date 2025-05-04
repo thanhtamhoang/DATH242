@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign In</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <nav>
+    <a class="logo" href = "{{url_for('home')}}"></a>
+    <ul>
+      <li><a href="{{url_for('home')}}" class = "active">Home</a></li>
+      <li><a href="#">About</a></li>
+      <li><a href="{{url_for('teacher_home')}}">Teacher</a></li>
+      <li><a href="{{url_for('student_home')}}">Student</a></li>
+      <li><a href="{{url_for('aao_home')}}">AAO</a></li>
+      <li><a href="{{url_for('loginpage')}}">Sign in</a></li>
+    </ul>
+  </nav>
+  <div class = "login-container">
+    <form method="POST" action="{{ url_for('login') }}">
+        <label>Email:</label>
+        <input type="text" name="username" required><br>
+        <label>Password:</label>
+        <input type="password" name="password" required><br>
+        <button type="submit">Log In</button>
+    </form>
+    </div>
+  {% if error %}
+    <p style="color:red;">{{ error }}</p>
+  {% endif %}
+</body>
+</html>
+
