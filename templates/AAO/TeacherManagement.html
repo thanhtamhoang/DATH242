@@ -1,0 +1,232 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Teacher Management</title>
+  <link 
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
+    rel="stylesheet">
+  <link 
+    href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" 
+    rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <nav>
+    <a class="logo" href = "{{url_for('aao_home')}}"></a>
+    <ul>
+      <li><a href="{{url_for('aao_home')}}" >Home</a></li>
+      <li><a href="{{url_for('teacher_management')}}">Teacher Management</a></li>
+      <li><a href="{{url_for('course_management')}}">Course Management</a></li>
+      <li><a href="{{url_for('home')}}">Sign out</a></li>
+    </ul>
+  </nav>
+
+  <div class="container">
+    {% if exist_already %}
+    <script>
+      Swal.fire({
+        icon: 'warning',
+        title: 'Insert Unsuccessfully',
+        text: 'Please enter again.',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000
+      });
+    </script>
+    {% endif %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4>Teacher</h4>
+      <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addTeacherModal">
+        Add Teacher
+      </button>
+    </div>
+
+    <table id="teacherTable" class="table table-striped table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>TeacherID</th>
+          <th>Name</th>
+          <th>Department</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in teachers %}
+        <tr class="vt-row" data-teacher-id="{{ t[0] }}" data-teacher-name="{{ t[1] }}">
+          <td>{{ t[0] }}</td>
+          <td>{{ t[1] }}</td>
+          <td>{{ t[2] }}</td>
+          <td>
+            <button class="btn btn-danger btn-sm btn-show-delete-modal" 
+                    data-teacher-id="{{ t[0] }}">
+              Delete
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Add Teacher Modal -->
+  <div class="modal fade" id="addTeacherModal" tabindex="-1">
+    <div class="modal-dialog"><form method="POST" action="{{ url_for('add_teacher') }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add new teacher</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input class="form-control" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Department</label>
+            <input class="form-control" name="department" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary">Add</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </form></div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+    <div class="modal-dialog">
+      <form id="confirmDeleteForm" method="POST">
+        <input type="hidden" name="teacher_id" id="confirm_teacher_id">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Delete teacher confirmation</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p>This teacher is currently teaching the following classes:</p>
+            <ul id="classesList"></ul>
+            <p>Are you sure to delete?</p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-danger">Delete</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- View Classes Modal -->
+  <div class="modal fade" id="viewTeacherModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            Classes taught by <span id="vtTeacherName"></span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <table id="vtClassesTable" class="table table-striped table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Class ID</th>
+                <th>Course ID</th>
+                <th>Semester</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script>
+  $(document).ready(function() {
+    // 1) Init teacher table
+    $('#teacherTable').DataTable({
+      paging: true,
+      searching: true,
+      ordering: true,
+      responsive: true,
+      lengthChange: false,
+      language: { search: "_INPUT_", searchPlaceholder: "Search teacher…" },
+      dom:
+        "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" +
+        "<'table-responsive'tr>" +
+        "<'row mt-3'<'col-md-5'i><'col-md-7'p>>"
+    });
+
+    // 2) Init vtClassesTable and keep reference
+    const vtTable = $('#vtClassesTable').DataTable({
+      paging:   true,
+      searching:true,
+      ordering: true,
+      responsive:true,
+      lengthChange:false,
+      language: { search:"_INPUT_", searchPlaceholder:"Search classes…" },
+      dom:
+        "<'row mb-3'<'col-md-6'l><'col-md-6'f>>" +
+        "<'table-responsive'tr>" +
+        "<'row mt-3'<'col-md-5'i><'col-md-7'p>>"
+    });
+
+    // Delete modal logic
+    $('.btn-show-delete-modal').on('click', async function() {
+      const teacherId = $(this).data('teacher-id');
+      $('#confirm_teacher_id').val(teacherId);
+      const resp = await fetch(`/teacher_classes/${teacherId}`);
+      const data = await resp.json();
+      const ul = $('#classesList').empty();
+      if (data.classes.length) {
+        data.classes.forEach(c => ul.append(`<li>${c.class_id} – ${c.subject_name} (${c.sem_id})</li>`));
+      } else {
+        ul.append('<li>No classes.</li>');
+      }
+      new bootstrap.Modal($('#confirmDeleteModal')).show();
+    });
+
+    // View classes modal logic
+    $('.vt-row').on('click', async function(e) {
+      if ($(e.target).closest('.btn-show-delete-modal').length) return;
+      const teacherId   = $(this).data('teacher-id');
+      const teacherName = $(this).data('teacher-name');
+      $('#vtTeacherName').text(teacherName);
+
+      const resp = await fetch(`/teacher_classes/${teacherId}`);
+      const data = await resp.json();
+
+      vtTable.clear();
+      data.classes.forEach(c => {
+        vtTable.row.add([
+          c.class_id,
+          c.subject_name,
+          c.sem_id,
+          c.status || ''
+        ]);
+      });
+      vtTable.draw();
+      new bootstrap.Modal($('#viewTeacherModal')).show();
+    });
+  });
+  </script>
+</body>
+</html>

@@ -3,18 +3,356 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AAO Home</title>
+  <title>Class Management</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"  rel="stylesheet">
+  <script  src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 </head>
 <body>
   <nav>
     <a class="logo" href = "{{url_for('aao_home')}}"></a>
     <ul>
       <li><a href="{{url_for('aao_home')}}" >Home</a></li>
-      <li><a href="{{url_for('course_list')}}">Course Management</a></li>
+      <li><a href="{{url_for('teacher_management')}}">Teacher Management</a></li>
+      <li><a href="{{url_for('course_management')}}">Course Management</a></li>
       <li><a href="{{url_for('home')}}">Sign out</a></li>
     </ul>
   </nav>
-<a>{{courses[1]}}</a>
+
+  {% if ExistAlready %}
+    <script>
+      Swal.fire({
+        icon: 'warning',
+        title: 'Already Exist',
+        text: 'This class is exist already.',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
+    </script>
+    {%endif%}
+    {%if AddSuccessfully %}
+     <script>
+      Swal.fire({
+        icon: 'success',
+        title: 'Add Successfully',
+        text: 'You created a class successfully.',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
+      </script>
+    {% endif %}
+    
+
+  <div class="p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+        Add Course
+    </button>
+  </div>
+
+    <div class = "container">
+      <h4>Course</h4>
+
+      <div class="container my-4">
+
+      <form method = "POST" action = "{{url_for('search_course_through_faculty_aao_function')}}">
+      <!-- Faculty selector -->
+      <div class="mb-4">
+        <label for="faculty_name" class="form-label">Faculty</label>
+        <select id="faculty_name" name="faculty_name" class="form-select" required>
+          <option value="" selected disabled>-- Choose faculty --</option>
+          {% for faculty in Faculty %}
+            <option value="{{ faculty[0] }}">{{ faculty[0] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Nút submit form đăng ký, nếu cần -->
+      <button id="btn-register" class="btn btn-primary">
+        <i class="bi bi-arrow-right-circle"></i> Show Classes
+      </button>
+    </form>
+  </div>
+      <table id = "courseTable" class="table table-bordered table-striped table-hover align-middle">
+          <thead class="table-light">
+              <tr>
+                  <th>CourseID</th>
+                  <th>Course Name</th>
+                  <th>Credits</th>
+                  <th>Faculty</th>
+              </tr>
+          </thead>
+          <tbody>
+              
+              {% for t in courses %}
+                  <tr style="cursor: pointer;" onclick="window.location='{{ url_for('view_course', course_id=t[0]) }}'">
+                      <td>{{ t[0] }}</td>
+                      <td>{{ t[1] }}</a></td>
+                      <td>{{ t[2] }}</td>
+                      <td>{{ t[4] }} </td>
+                  </tr>
+              {% endfor %}
+              {% if courses|length == 0 %}
+                  <tr>
+                      <td colspan="5" class="text-center">No course found</td>
+                  </tr>
+              {% endif %}
+          </tbody>
+      </table>
+    </div>
+    <!-- Modal Trigger Script (auto show on page load if có dữ liệu) -->
+{% if course %}
+  <script>
+    window.onload = () => {
+      const modal = new bootstrap.Modal(document.getElementById('courseModal'))
+      modal.show();
+    }
+  </script>
+{% endif %}
+
+<!-- Bootstrap Modal -->
+<div class="modal fade" id="courseModal" tabindex="-1" aria-labelledby="courseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="courseModalLabel">Class Information </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <table id = "classTable" class="table table-bordered table-striped ">
+          <thead>
+            <tr>
+              <th>Class ID</th>
+              <th>Teacher</th>
+              <th>Day</th>
+              <th>Segment</th>
+              <th>Room</th>
+              <th>Semester</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in course %}
+              <tr class="{% if c[0][3] == 'Active' %}table-success{% else %}table-muted{% endif %}">
+                <td>{{ c[0][0] }}</td>
+                <td>{{ c[2][0] }}</td>
+                <td>{{ c[1][2] }}</td>
+                <td>{{ c[1][0] }} - {{c[1][1]}}</td>
+                <td>{{ c[1][3] }}</td>
+                <td>{{ c[0][2]}}</td>
+                <td><span class="badge {% if c[0][3] == 'Active' %}bg-success{% else %}bg-secondary{% endif %}">
+                    {{ c[0][3] }}
+                  </span></td>
+                <td>
+                  {# Hiển thị badge cho rõ status #}
+                  
+                  {# Form inline để toggle status #}
+                  <form 
+                    method="POST" 
+                    action="{{ url_for('toggle_class_status') }}" 
+                    class="d-inline ms-2"
+                  >
+                    {# Gửi đủ thông tin định danh class #}
+                    <input type="hidden" name="class_id" value="{{ c[0][0] }}">
+                    <input type = "hidden" name = "course_id" value = "{{c[0][1]}}">
+                    <input type="hidden" name="sem_id"   value="{{ c[0][2] }}">
+                    <button 
+                      type="submit" 
+                      class="btn btn-sm btn-outline-{{ 'danger' if c[0][3]=='Active' else 'success' }}"
+                    >
+                      {% if c[0][3] == 'Active' %}
+                        Deactivate
+                      {% else %}
+                        Activate
+                      {% endif %}
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div>
+          <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addClassModal" data-course-id = "{{course_id}}">
+            Add Class
+          </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addClassModal" tabindex="-1" aria-labelledby="addClassModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form action="{{ url_for('add_class') }}" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addClassModalLabel">Add New Class for Course {{ course_id }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="course_id" value="{{ course_id }}">
+
+          <div class="mb-3">
+            <label for="class_id" class="form-label">Class ID</label>
+            <input type="text" class="form-control" name="class_id" id="class_id" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="teacher_id" class="form-label">Teacher</label>
+            <select class="form-select" name="teacher_id" id="teacher_id" required>
+              {% for teacher in teachers %}
+                <option value="{{ teacher[0] }}">{{ teacher[1] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col">
+              <label for="start_time" class="form-label">Start Time</label>
+              <input type="time" class="form-control" name="start_time" id="start_time" required>
+            </div>
+            <div class="col">
+              <label for="end_time" class="form-label">End Time</label>
+              <input type="time" class="form-control" name="end_time" id="end_time" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="day" class="form-label">Day of Week</label>
+            <select class="form-select" name="day" id="day" required>
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="room" class="form-label">Room</label>
+            <select class="form-select" name="room" id="room" required>
+                <option value="A101">A101</option>
+                <option value="A102">A102</option>
+                <option value="A103">A103</option>
+                <option value="A104">A104</option>
+                <option value="B201">B201</option>
+                <option value="B202">B202</option>
+                <option value="B203">B203</option>
+                <option value="B204">B204</option>
+                <option value="C301">C301</option>
+                <option value="C302">C302</option>
+                <option value="C303">C303</option>
+                <option value="C304">C304</option>
+                <option value="D401">D401</option>
+                <option value="D402">D402</option>
+                <option value="D403">D403</option>
+                <option value="D404">D404</option>
+                
+              </select>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Add Class</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+    <div class="modal fade" id="addCourseModal" tabindex="-1" aria-labelledby="addCourseLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form method="POST" action="{{ url_for('add_course') }}">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addCourseLabel">Add new course</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="course_name" class="form-label">Name</label>
+              <input type="text" class="form-control" id="course_name" name="course_name" required>
+            </div>
+            <div class="mb-3">
+              <label for="course_id" class="form-label">Course ID</label>
+              <input type="text" class="form-control" id="course_id" name="course_id" required>
+            </div>
+            <div class="mb-3">
+              <label for="course_credits" class="form-label">Course Credits</label>
+              <input type="text" class="form-control" id="course_credits" name="course_credits" required>
+            </div>
+            <div class = "mb-3">
+              <label for="required_credits" class="form-label">Required Credits</label>
+              <select class = "form-select" id="required_credits" name="required_credits">
+                  <option value="26">26(First Year)</option>
+                  <option value="26">58(Second Year)</option>
+                  <option value="26">84(Third Year)</option>             
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Add</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+   $(document).ready(function() {
+    $('#courseTable').DataTable({
+      paging:   true,
+      searching:true,
+      ordering: true,
+      order:    [[0, 'asc']],
+      // Áp theme Bootstrap
+      responsive: true,
+      lengthChange: false,
+      // Bật giao diện Bootstrap cho nút pagination/search
+      language: {
+        search: "_INPUT_",
+        searchPlaceholder: "Search courses…"
+      },
+      dom:
+        "<'row mb-3'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+        "<'table-responsive'tr>" +
+        "<'row mt-3'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
+    });
+      $('#classTable').DataTable({
+      paging:   true,
+      searching:true,
+      ordering: true,
+      order:    [[0, 'asc']],
+      // Áp theme Bootstrap
+      responsive: true,
+      lengthChange: false,
+      // Bật giao diện Bootstrap cho nút pagination/search
+      language: {
+        search: "_INPUT_",
+        searchPlaceholder: "Search courses…"
+      },
+      dom:
+        "<'row mb-3'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+        "<'table-responsive'tr>" +
+        "<'row mt-3'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
+    });
+});
+</script>
 </body>
 </html>
